@@ -1,48 +1,39 @@
 ﻿1. Показать названия и категории товаров, поставщиками которых являются ООО "Паньки" или ООО «Какие люди»
-SELECT Products.ProductName, Products.Category
-FROM Products
-INNER JOIN Suppliers ON Products.ManufacturerName = Suppliers.ManufacturerName
-WHERE Suppliers.ManufacturerName IN ('ООО "Паньки"', 'ООО «Какие люди»');
-
+SELECT Product.name, Product.category
+FROM Product
+INNER JOIN Manufacturer ON Product.producer = Manufacturer.name
+WHERE Manufacturer.name IN ('ООО "Паньки"', 'ООО «Какие люди»');
 
 2. Выбрать все товары с указанием их поставщика, имя производителя которых не содержит букв [АКМ], и категория которых не "Крупы"
-SELECT Products.*, Suppliers.ManufacturerName
-FROM Products
-INNER JOIN Suppliers ON Products.ManufacturerName = Suppliers.ManufacturerName
-WHERE Suppliers.ManufacturerName NOT LIKE '%[АКМ]%' AND Products.Category != 'Крупы';
-
+SELECT Product.producer, Product.category
+FROM Product
+INNER JOIN Manufacturer ON Product.producer = Manufacturer.name
+WHERE Manufacturer.name NOT LIKE '%[АКМ]%' AND Product.category != 'Крупы';
 
 3. Показать названия и категории товаров с указанием поставщика и страны производителя. Условие: страна производителя не Украина и не Польша, цена поставки менее 50 гривен, а дата поставки от 10.10.2023 и по сей день
-SELECT Products.ProductName, Products.Category, Suppliers.ManufacturerName, Manufacturers.ManufacturerCountry
-FROM Products
-INNER JOIN Suppliers ON Products.ManufacturerName = Suppliers.ManufacturerName
-INNER JOIN Manufacturers ON Suppliers.ManufacturerName = Manufacturers.ManufacturerName
-WHERE Manufacturers.ManufacturerCountry NOT IN ('Ukraine', 'Poland') AND Products.Price < 50 AND Products.DeliveryDate >= '2023-10-10' AND Products.DeliveryDate <= GETDATE();
-
+SELECT Product.name, Product.category, Manufacturer.name, Manufacturer.country
+FROM Product
+INNER JOIN Manufacturer ON Product.producer = Manufacturer.name
+WHERE Manufacturer.country NOT IN ('Украина', 'Польша') AND Product.price < 50 AND Product.date_of_delivery >= '2023-10-10';
 
 4. Показать все кондитерские и безалкогольные товары, которых было продано более 100. Показать информацию о поставцике и производителе
-SELECT Products.*, Suppliers.ManufacturerName AS SupplierName, Manufacturers.ManufacturerName AS ManufacturerName
-FROM Products
-INNER JOIN Suppliers ON Products.ManufacturerName = Suppliers.ManufacturerName
-INNER JOIN Manufacturers ON Suppliers.ManufacturerName = Manufacturers.ManufacturerName
-WHERE Products.Category IN ('Backery', 'Alcohol free') AND Products.Quantity > 100;
-
+SELECT Product.*, Manufacturer.*
+FROM Product
+INNER JOIN Manufacturer ON Product.producer = Manufacturer.name
+WHERE Product.category IN ('Выпечка', 'Безалкогольные напитки') AND Products.quantity > 100;
 
 5. Сделать запрос на выборку информации о поставке товаров в следующем виде: название товара и его поставщика, категории, дата поставки и общую стоимость поставленных товаров. Условие: только трех указанных в запросе поставщиков. Отсортировать названия товаров в алфавитном порядке
-SELECT Products.ProductName, Suppliers.ManufacturerName AS Supplier, Products.Category, Products.DeliveryDate,  SUM(Products.Price * Products.Quantity) AS TotalCost
-FROM Products
-INNER JOIN Suppliers ON Products.ManufacturerName = Suppliers.ManufacturerName
-WHERE Suppliers.ManufacturerName IN ('Supplier1', 'Supplier2', 'Supplier3')
-GROUP BY Products.ProductName, Suppliers.ManufacturerName,  Products.Category, Products.DeliveryDate
-ORDER BY Products.ProductName;
-
+SELECT Product.name, Product.supplier, Product.country, Product.category, Product.date_of_delivery, SUM(Product.price * Product.quantity) AS TotalCost
+FROM Product
+WHERE Product.supplier IN ('Черепаха', 'Улитка', 'Каракатица')
+GROUP BY Product.name, Product.supplier, Product.country, Product.category, Product.date_of_delivery
+ORDER BY Product.name;
 
 6. Сделать запрос на выборку о продажах товаров в следующем виде: название товара и его производителя, полный адрес (страна, город, улица) производителя в одной ячейке, категории, дате продажи и общей стоимости продажи.
 Условие: выведенная информация не должна касаться двух указанных в запросе производителей. Отсортировать общую стоимость продаж в порядке убывания
-SELECT Products.ProductName, Manufacturers.ManufacturerName AS Producer, CONCAT(Manufacturers.Country, ', ', Manufacturers.City, ', ', Manufacturers.Street) AS FullAddress, Products.Category,  Sales.SaleDate,  SUM(Sales.Quantity * Sales.Price) AS TotalSaleCost
-FROM Sales
-INNER JOIN Products ON Sales.ProductID = Products.ProductID
-INNER JOIN Manufacturers ON Products.ManufacturerName = Manufacturers.ManufacturerName
-WHERE Manufacturers.ManufacturerName NOT IN ('Manufacturer1', 'Manufacturer2')
-GROUP BY Products.ProductName, Manufacturers.ManufacturerName, Manufacturers.Country, Manufacturers.City,  Manufacturers.Street, Products.Category, Sales.SaleDate
+SELECT Product.name, Product.producer, CONCAT(Manufacturer.country, ', ', Manufacturer.city, ', ', Manufacturer.street) AS FullAddress, Product.category, SUM(Product.quantity * Product.price) AS TotalSaleCost
+FROM Product
+INNER JOIN Manufacturer ON Product.producer = Manufacturer.name
+WHERE Manufacturer.name NOT IN ('ООО Сад', 'ООО Пекарь')
+GROUP BY Product.name, Manufacturer.name, Manufacturer.country, Manufacturer.city,  Manufacturer.street, Product.category
 ORDER BY TotalSaleCost DESC;
